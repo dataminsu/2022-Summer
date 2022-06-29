@@ -59,3 +59,19 @@ The second line of output is printed out instead, but this means that the calcul
 ```{r}
 ggplot2::qplot(data = iris, x =Sepal.Length, y = Sepal.Width)
 ```
+
+#How does this work
+df <-data.frame(name = c('Luke Skywalker', 'C-3PO', 'R2-D2', 'Darth Vader', 'Leia Organa','Owen Lars'), height=c(172, 167, 96, 202, 150, 178), mass=c(77,75,32,136,49,120))
+library(ggplot2)
+
+#히스토그램(histogram)
+qplot(x=height, data=starwars)
+
+#qplot 산점도
+qplot(x=height, y=mass, data=df)
+
+library(dplyr)
+qplot(x=height, y=mass, data=starwars)
+ggplot(data=starwars, aes(x=height, y=mass)) +geom_point()
+
+View(starwars)
