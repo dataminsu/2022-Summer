@@ -102,20 +102,3 @@ qplot(x=bill_length_mm, y=body_mass_g, color=species, data=penguins)
 ```
 * How does coloring the data points by species of penguin make the relationship between bill length and body mass easier to understand? Is any pattern more obvious than before?
 Compare to exercise5, it is more easy to understand cause by adding colour, we can specify the species, and each spicies have relationship between bodymass and bill lngth. Longer bill length has longer body mass.
-
-
-#View(penguins)
-summary(penguins)
-
-qplot(x=flipper_length_mm, data=penguins)
-qplot(x=flipper_length_mm, data=penguins, bins=15)
-qplot(x=flipper_length_mm, data=penguins)
-qplot(x=flipper_length_mm,binwidth=1, data=penguins)
-
-
-qplot(x=flipper_length_mm, y=body_mass_g, data=penguins)
-
-qplot(x=bill_length_mm, y=body_mass_g, data=penguins)
-qplot(x=bill_length_mm, y=body_mass_g, data=penguins)
-
-qplot(x=bill_length_mm, y=body_mass_g, color=species, data=penguins)
