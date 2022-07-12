@@ -18,7 +18,5 @@
 ## Data
 Central cities population
 - https://worldpopulationreview.com/world-cities
-The number of stations in central cities
--
-Population density of central cities
--
+- The number of stations in central cities
+- Population density of central cities
