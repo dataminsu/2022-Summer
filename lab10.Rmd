@@ -1,0 +1,159 @@
+---
+title: "Lab 10:Interactive visualisations and dashboards in R"
+author: "Minsu Kang"
+Date: "2022-07-20"
+documentclass: article
+geometry: margin=2in
+fontsize: 11pt
+output:
+  html_document: 
+    highlight: tango
+  pdf_document:
+    highlight: tango
+  github_document:
+    html_preview: false
+---
+
+```{r setup, include = FALSE}
+# DO NOT ALTER CODE IN THIS CHUNK
+# Set knitr options
+knitr::opts_chunk$set(echo = TRUE)
+
+# Load required packages
+suppressPackageStartupMessages(library(tidyverse, quietly = TRUE))
+suppressPackageStartupMessages(library(plotly, quietly = TRUE))
+suppressPackageStartupMessages(library(leaflet, quietly = TRUE))
+suppressPackageStartupMessages(library(RColorBrewer, quietly = TRUE))
+suppressPackageStartupMessages(library(GGally, quietly = TRUE))
+suppressPackageStartupMessages(library(flexdashboard, quietly = TRUE))
+
+# Load data
+wine <- read_csv("Red_wine_dataset.csv")
+map <- read_csv("map_data.csv")
+```
+
+* * *
+
+## Lab report
+
+## Exercises
+
+### Exercise 1
+```{r}
+str(wine)
+```
+    i) There are 13 variables(columns) and 1599 observations(rows) in the wine quality dataframe.
+    ii) Wine Label variable is character type.
+
+
+
+### Exercise 2
+```{r}
+ggplot(data = wine) +
+  geom_bar(aes(x = Label),fill="steelblue") +
+  # Adding plot title and y-axis label
+  labs(title = "Distribution of Red Wines", y = "Count") +
+  # Adding a theme to the plot
+  theme_minimal()
+```
+
+    - 'Average' category shows the highest count in the label variable.
+
+### Exercise 3
+```{r}
+ggplot(data = wine) +
+  geom_bar(aes(x = Label),fill="Coral") +
+  # Adding plot title and y-axis label
+  labs(title = "Distribution of Red Wines", y = "Count") +
+  theme_light()
+```
+
+
+   
+
+### Exericse 4
+```{r}
+ggcorr(wine[1:12],
+       label = TRUE, 
+       label_size = 2, 
+       label_alpha = TRUE,
+       size = 3,
+       hjust = 0.3) + labs(title="correlagram of wine quality dataframe")
+```
+
+    i) The highest positive correlated variable between quality is Alcohol(0.5), and lowest variable is Volatile_acidity(-0.4).
+
+
+### Exericse 5
+
+    - We can conclude wine quality is decided by two volatile acidity and alcohol. I can say if someone want higher
+    quality of wine, consider higher alcohol and lower volatile acidity.
+
+
+### Exericse 6
+```{r}
+wine %>% 
+ggplot() +
+  geom_point(mapping= (aes(x=Alcohol, y= Volatile_acidity, color = Label))) +
+  theme_light() +
+  labs(title="Scatterplot of Alcohol and Volatile acidity", x="Alcohol", y="Volatile acidity")
+```
+
+
+### Exericse 7
+```{r}
+ggplotly(wine %>% 
+ggplot() +
+  geom_point(mapping= (aes(x=Alcohol, y= Volatile_acidity, color = Label))) +
+  theme_light() +
+  labs(title="Scatterplot of Alcohol and Volatile acidity", x="Alcohol", y="Volatile acidity"))
+```
+
+
+
+### Exercise 8
+```{r}
+map %>%
+  leaflet() %>%
+  addTiles() %>%
+  addMarkers(lat = ~Lat, lng= ~Lon)
+```
+
+
+
+
+### Exericse 9
+```{r}
+map %>%
+  leaflet() %>%
+  addTiles() %>%
+  addCircleMarkers(lat = ~Lat, lng= ~Lon)
+```
+
+
+
+
+### Exericse 10
+```{r}
+map %>%
+leaflet() %>%
+  addProviderTiles(providers$Wikimedia) %>%
+  setView(lng = -100.243683, lat =  34.052235, zoom = 6) %>%
+  addCircleMarkers(lat = ~Lat, lng = ~Lon)
+```
+    i)We increase the number of Zoom parameter, first-shown map is moved to closed-shot map, and lower number moves map to long-shot map.
+
+
+### Exericse 11
+```{r}
+map %>%
+leaflet() %>%
+  addProviderTiles(providers$Esri.WorldStreetMap) %>%
+  setView(lng = -100.243683, lat =  34.052235, zoom = 3) %>%
+  addCircleMarkers(lat = ~Lat, lng = ~Lon,
+             popup = paste("Name:", map$Name,"<br>",
+                            "Rank:", map$Rank, "<br>",
+                            "Adress", map$Address, "<br>"
+                           ))
+```
+

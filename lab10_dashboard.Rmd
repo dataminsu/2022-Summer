@@ -1,0 +1,66 @@
+---
+title: "Lab 10: IInteractive visualisations and dashboards in R"
+author:"2022-07-20"
+output: 
+  flexdashboard::flex_dashboard:
+    orientation: columns
+    vertical_layout: fill
+---
+
+```{r setup, include=FALSE}
+library(flexdashboard)
+```
+
+Column {data-width=650}
+-----------------------------------------------------------------------
+
+#Basic Analysis
+
+### Chart A
+
+```{r}
+ggplotly(ggplot(data = wine) +
+  geom_bar(aes(x = Label),fill="Coral") +
+  # Adding plot title and y-axis label
+  labs(title = "Distribution of Red Wines", y = "Count") +
+  theme_light())
+```
+
+Column {data-width=350}
+-----------------------------------------------------------------------
+
+### Correlation plot
+
+```{r}
+ggcorr(wine[1:12],
+       label = TRUE, 
+       label_size = 2, 
+       label_alpha = TRUE,
+       size = 3,
+       hjust = 1) + labs(title="correlagram of wine quality dataframe")
+```
+
+### Scatter plot
+
+```{r}
+ggplotly(wine %>% 
+ggplot() +
+  geom_point(mapping= (aes(x=Alcohol, y= Volatile_acidity, color = Label))) +
+  theme_light() +
+  labs(title="Scatterplot of Alcohol and Volatile acidity", x="Alcohol", y="Volatile acidity"))
+```
+
+#State wide best winarey
+
+```{r}
+map %>%
+leaflet() %>%
+  addProviderTiles(providers$Esri.WorldStreetMap) %>%
+  setView(lng = -100.243683, lat =  34.052235, zoom = 3) %>%
+  addCircleMarkers(lat = ~Lat, lng = ~Lon,
+             popup = paste("Name:", map$Name,"<br>",
+                            "Rank:", map$Rank, "<br>",
+                            "Adress", map$Address, "<br>"
+                           ))
+```
+
