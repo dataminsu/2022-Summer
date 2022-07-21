@@ -1,0 +1,239 @@
+---
+title: "Assignment 8: Surviving the Titanic"
+author: "Seohyung Lee, Minsu Kang, Bomin Lyoo"
+date: "`r Sys.Date()`"
+documentclass: article
+geometry: margin=1in
+fontsize: 11pt
+output:
+  pdf_document:
+    toc: false
+    df_print: kable
+    fig_caption: false
+    number_sections: false
+    dev: pdf
+    highlight: tango
+  html_document:
+    theme: default
+    self_contained: true
+    toc: false
+    df_print: kable
+    fig_caption: false
+    number_sections: false
+    smart: true
+    dev: svg
+---
+```{r setup, include = FALSE}
+# DO NOT ALTER THIS CHUNK
+knitr::opts_chunk$set(
+  echo = TRUE,
+  eval = TRUE,
+  fig.width = 5,
+  fig.asp = 0.618,
+  out.width = "70%",
+  dpi = 120,
+  fig.align = "center",
+  cache = FALSE
+)
+# Cost function for cross validation
+cost <- function(obs, pred) {
+  outcome <- pred > 0.5
+  return(1 - (sum(obs == outcome) / length(obs)))
+}
+# Load required packages
+suppressPackageStartupMessages(library(tidyverse))
+suppressPackageStartupMessages(library(ggmosaic))
+suppressPackageStartupMessages(library(modelr))
+suppressPackageStartupMessages(library(boot))
+```
+## Exercise 1
+1. 
+```{r}
+train_df <- read_csv(file = "train.csv",
+  col_types = cols(
+    Pclass = col_character(),
+    SibSp = col_character(),
+    Parch = col_character()
+  ))
+```
+2.
+```{r}
+train_df <- train_df %>%
+mutate(
+     did_survive = as.logical(Survived)
+)
+```
+## Exercise 2
+```{r}
+pivot_df<- train_df %>%
+  pivot_longer(cols = Age | Fare, names_to="variables", values_to = "values")
+```
+```{r}
+pivot_df %>%
+  ggplot() +
+  geom_histogram(
+   mapping = aes(x = values, fill = did_survive),
+   position = "identity",
+   alpha = 0.5) +
+  facet_wrap(~variables, scales = "free") + 
+   labs(title = "Survival frequency by age and fare", x = "variables", y = "frequency")
+```
+1. Using your graphs, how do the distributions of the Age and Fare variables differ between survivors and non-survivors?
+The age distribution of survivors merged in the left side, the age distribution of non-survivors detected in right-side. The fare distribution of survivors exist on from 200 to 300 and above 500. The fare of non-survivors distribution merged between 0 to 100 and less spread compares to the survivors.
+2. Do you think these differences will be helpful for predicting who survived?
+Yes, because survivors and non-survivors show different distributions of age and fare, will be helpful predictors of survival.
+## Exercise 3
+```{r, fig.width= 10}
+train_df %>%
+  pivot_longer(cols = c(Pclass | Sex | Parch | SibSp), names_to="variables", values_to = "values") %>%
+  ggplot() +
+  geom_bar(mapping = aes(x = values, fill = did_survive)) +
+  facet_wrap(~ variables, scales = "free") + 
+   labs(title = "Survival frequency by variables", x = "variables", y = "frequency")
+```
+1.Which of these variables are good predictors for survival? Variables of "sex" and "passenger class" are good predictors for survival. Good predictors have be more one color than another color.
+2.Which of these variables are poor predictors of survival? Variables of "Number of Siblings or Spouses Aboard" and "Number of Parents or Children Aboard" are poor predictors of survival. Poor predictors have 50/50 split between colors.
+3.Do these results make sense considering the circumstances of how people were prioritized for boarding lifeboats? 
+These results make sense considering that prioritizes people who are minorities (children, women, elders) have boarded on lifeboats first than the others. Also, considering passengers class, the higher class passengers have boarded on lifeboats first than the others. It is because they have spent more money on their tickets.
+4.Which predictor do you think was the most useful for predicting survival?
+'Sex' predictor shows more clear difference between survivors and non-survivors. Therefore, it is the most useful for predicting survival.
+## Exercise 4
+```{r}
+train_df %>%
+  ggplot() +
+  geom_mosaic(mapping = aes(x = product(Sex, Pclass), fill = Sex)) + 
+  facet_grid(. ~ did_survive, scales="free") +
+  labs(x = "Passenger class", y = "Sex", title = "Survivors of the Titanic in mosaic plot")
+```
+1. The interaction of gender and passenger class seem to affect survival, because blue mossaic part is larger than the pink mossaic part. Also, the passenger class have been affected on survival which interpreted by the stair shape of the non-survivor graph.
+2. Non-survivors effected by passenger class in both genders (male and female). On the other hand, both genders did not affected by the passenger class since the female survivors resuced regardless of their passenger class.
+## Exercise 5
+1.
+```{r}
+train_df %>%
+  summarize(
+    total = n(),
+    missing = sum(is.na(Age)),
+    fraction_missing = missing / total
+  )
+```
+2.
+```{r}
+train_imputed <- train_df %>%
+  mutate(
+    age_imputed = if_else(
+      condition = is.na(Age),
+      true = median(Age, na.rm = TRUE),
+      false = Age
+    )
+  )
+```
+```{r}
+train_imputed %>%
+  summarize(
+    total = n(),
+    missing = sum(is.na(age_imputed)),
+    fraction_missing = missing / total
+  )
+```
+## Exercise 6
+1.
+```{r}
+model_1 <- glm(Survived ~ age_imputed, data = train_imputed, family = "binomial")
+```
+2.
+```{r}
+model_1_preds <- train_imputed %>%
+add_predictions(model_1, type = "response") %>%
+mutate(
+   outcome = if_else(condition = pred > 0.5,
+   true = 1,
+   false = 0))
+```
+3.
+```{r}
+model_1_preds %>%
+  mutate(
+    correct = if_else(
+      condition = Survived == outcome,
+      true = 1,
+      false = 0
+    )
+  ) %>%
+  summarize(
+    total_correct = sum(correct),
+    accuracy = total_correct/n()
+  )
+```
+The accuracy of the model is moderate, because it is over 0.6 and less than 0.7 which is 0.6161616.
+## Exercise 7
+```{r}
+logistic_cv1 <- cv.glm(train_imputed, model_1, cost, K=5)
+logistic_cv1$delta
+```
+When we see the delta item in the logistic_cv1, it has 0.3838384 which is overall cross-validation error score.
+
+## Exercise 8
+1.
+```{r}
+model_2 <- glm(Survived ~ age_imputed + SibSp + Pclass + Sex, data = train_imputed, family = "binomial")
+logistic_cv2 <- cv.glm(train_imputed, model_2, cost, K=5)
+logistic_cv2$delta
+```
+2.
+```{r}
+model_3 <- glm(Survived ~ Sex, data = train_imputed, family = "binomial")
+logistic_cv3 <- cv.glm(train_imputed, model_3, cost, K=5)
+logistic_cv3$delta
+```
+The model 2 has the most accurate. It is because the validation error, delta, is smallest which is 0.1964085.
+## Bonus Exercise
+If you choose to do the bonus exercise, write your code here. Otherwise you can delete this section.
+
+```{r}
+test_df <- read_csv(file = "test.csv",
+  col_types = cols(
+    Pclass = col_character(),
+    SibSp = col_character(),
+    Parch = col_character()
+  ))
+
+test_df %>%
+  summarize(
+    total = n(),
+    missing = sum(is.na(Age)),
+    fraction_missing = missing / total
+  )
+```
+```{r}
+test_imputed <- test_df %>%
+  mutate(
+    age_imputed = if_else(
+      condition = is.na(Age),
+      true = median(Age, na.rm = TRUE),
+      false = Age
+    )
+  )
+```
+```{r}
+test_imputed %>%
+  summarize(
+    total = n(),
+    missing = sum(is.na(age_imputed)),
+    fraction_missing = missing / total
+  )
+```
+```{r}
+model_2_preds <- test_imputed %>%
+add_predictions(model_2, type = "response") %>%
+mutate(
+   outcome = if_else(condition = pred > 0.5,
+   true = 1,
+   false = 0))
+
+d <- model_2_preds %>% select(outcome, PassengerId) %>% rename("Survived" = outcome)
+
+```
+```{r}
+write.csv(d, file="SeohyungLee_MinsuKang.csv")
+```
